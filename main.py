@@ -23,11 +23,18 @@ playerY = 480
 playerX_change = 0
 
 #Enemy
-enemyImg = pygame.image.load("alien.png")
-enemyX = random.randint(0,736)
-enemyY = random.randint(50,150)
-enemyX_change = 4
-enemyY_change = 4
+enemyImg = []
+enemyX = []
+enemyY = []
+enemyX_change = []
+enemyY_change = []
+num_of_enemies = 6
+for i in range(num_of_enemies):
+    enemyImg.append(pygame.image.load("alien.png"))
+    enemyX.append(random.randint(0,736))
+    enemyY.append(random.randint(50,150))
+    enemyX_change.append(4)
+    enemyY_change.append(40)
 
 #Bullet
 #ready: you can't see the bullet on the screen
@@ -38,13 +45,24 @@ bulletY = 480
 bulletX_change = 0
 bulletY_change = 1
 bullet_state = "ready"
-score = 0
+
+#score
+score_value = 0
+#if you wnat to use other font text, go to www.dafont.com,download the font you want, copy that .ttf file to pythonProject(main folder)
+font = pygame.font.Font('freesansbold.ttf',32)
+
+textX = 10
+textY = 10
+
+def show_score(x,y):
+    score = font.render("Score: " + str(score_value), True, (255,255,255))
+    screen.blit(score,(x,y))
 def player(x,y):
     #draw the screen by this picture, and the position of the picture on the screen
     screen.blit(playerImg,(x,y))
 
-def enemy(x,y):
-    screen.blit(enemyImg,(x, y))
+def enemy(x, y, i):
+    screen.blit(enemyImg[i],(x, y))
 
 def fire_bullet(x,y):
     global bullet_state
@@ -94,38 +112,42 @@ while running:
     elif playerX >= 736:
         playerX = 736
 
-    #enemy movement
-    enemyX += enemyX_change
 
-    if bulletY <= 0:
-        bulletY =480
-        bullet_state = "ready"
-    #Bullet movement
-    if bullet_state == "fire":
-        fire_bullet(bulletX,bulletY)
-        bulletY -= bulletY_change
 
-    #Collistion
-    collision = isCollision(enemyX,enemyY,bulletX,bulletY)
-    if collision:
-        bulletY = 480
-        bullet_state = "ready"
-        score += 1
-        print(score)
-        enemyX = random.randint(0,735)
-        enemyY = random.randint(50,150)
 
     # checking for boundaries of the enemy, so it doesn't go out of bounds
-    if enemyX <=0:
-        enemyX_change = 0.3
-        enemyY += enemyY_change
-    elif enemyX >= 736:
-        enemyX_change = - 0.3
-        enemyY += enemyY_change
+    for i in range(num_of_enemies):
+        # enemy movement
+        enemyX[i] += enemyX_change[i]
+        if enemyX[i] <=0:
+            enemyX_change[i] = 1
+            enemyY[i] += enemyY_change[i]
+        elif enemyX[i] >= 736:
+            enemyX_change[i] = - 1
+            enemyY[i] += enemyY_change[i]
+        # Collistion
+        collision = isCollision(enemyX[i], enemyY[i], bulletX, bulletY)
+        if collision:
+            bulletY = 480
+            bullet_state = "ready"
+            score_value += 1
+            enemyX[i] = random.randint(0, 735)
+            enemyY[i] = random.randint(50, 150)
+        enemy(enemyX[i], enemyY[i], i)
+
+    # Bullet movement
+    if bulletY <= 0:
+        bulletY = 480
+        bullet_state = "ready"
+
+    if bullet_state == "fire":
+        fire_bullet(bulletX, bulletY)
+        bulletY -= bulletY_change
 
     # invoke this function above update() method so pygame will display.update() all the setting above
     player(playerX,playerY)
-    enemy(enemyX,enemyY)
+
+    show_score(textX,textY)
     pygame.display.update()
 
 
