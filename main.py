@@ -2,6 +2,8 @@ import pygame
 import random
 import math
 
+from pygame import mixer   # handle all musik, sound into game
+
 #Initialize the pygame
 pygame.init()
 
@@ -10,6 +12,11 @@ screen = pygame.display.set_mode((800,600))
 
 #Create Background
 background = pygame.image.load("5558636.jpg")
+
+#Background sound
+mixer.music.load("background.wav")
+mixer.music.play(-1) # add "-1" inside to make this sound play in a loop, if we dont add argument here. it will play only 1 time
+
 
 #Caption and icon
 pygame.display.set_caption("Space Invaders")
@@ -29,6 +36,7 @@ enemyY = []
 enemyX_change = []
 enemyY_change = []
 num_of_enemies = 6
+
 for i in range(num_of_enemies):
     enemyImg.append(pygame.image.load("alien.png"))
     enemyX.append(random.randint(0,736))
@@ -54,9 +62,16 @@ font = pygame.font.Font('freesansbold.ttf',32)
 textX = 10
 textY = 10
 
+# Game Over Text
+over_font = pygame.font.Font('freesansbold.ttf', 60)
+
 def show_score(x,y):
     score = font.render("Score: " + str(score_value), True, (255,255,255))
     screen.blit(score,(x,y))
+
+def game_over_text():
+    over_text = over_font.render("GAME OVER ",True, (255, 255, 255))
+    screen.blit(over_text,(200,250))
 def player(x,y):
     #draw the screen by this picture, and the position of the picture on the screen
     screen.blit(playerImg,(x,y))
@@ -71,7 +86,7 @@ def fire_bullet(x,y):
 
 #Check distance between two points and the midpoint(googla)
 def isCollision(enemyX, enemyY, bulletX, bulletY):
-    distance = math.sqrt((math.pow(enemyX-bulletX,2)) +(math.pow(enemyY-bulletY,2)))
+    distance = math.sqrt(math.pow(enemyX-bulletX,2) +(math.pow(enemyY-bulletY,2)))
     if distance < 27:
         return True
     else:
@@ -87,7 +102,7 @@ while running:
    # playerX += 0.1  # move the picture to the right hand
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running =False
+            running = False
         #if keystroke is pressed check whether its right or left
         if event.type == pygame.KEYDOWN:  # KEYDOWN: press the keyboard
             if event.key == pygame.K_LEFT:  #K_LEFT: press the left_arrow key
@@ -96,9 +111,11 @@ while running:
                 playerX_change = 1
             if event.key == pygame.K_SPACE:  #K_SPACE: press the space key
                 if bullet_state == "ready":
+                    bullet_sound = mixer.Sound('laser.wav')
+                    bullet_sound.play()  # we don't add "-1" here because it just happen 1 time
                     # get the current x cordinate of the spaceship
                     bulletX = playerX
-                    fire_bullet(playerX,bulletY)
+                    fire_bullet(bulletX,bulletY)
 
         if event.type == pygame.KEYUP:  #KEYUP: release the keyboard
             if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
@@ -113,10 +130,15 @@ while running:
         playerX = 736
 
 
-
-
     # checking for boundaries of the enemy, so it doesn't go out of bounds
     for i in range(num_of_enemies):
+        # Game Over
+        if enemyY[i] > 400:
+            for j in range(num_of_enemies):
+               enemyY[j] = 2000
+            game_over_text()
+            break
+
         # enemy movement
         enemyX[i] += enemyX_change[i]
         if enemyX[i] <=0:
@@ -128,11 +150,14 @@ while running:
         # Collistion
         collision = isCollision(enemyX[i], enemyY[i], bulletX, bulletY)
         if collision:
+            explosion_sound = mixer.Sound('explosion.wav')
+            explosion_sound.play()
             bulletY = 480
             bullet_state = "ready"
             score_value += 1
             enemyX[i] = random.randint(0, 735)
             enemyY[i] = random.randint(50, 150)
+
         enemy(enemyX[i], enemyY[i], i)
 
     # Bullet movement
@@ -146,7 +171,6 @@ while running:
 
     # invoke this function above update() method so pygame will display.update() all the setting above
     player(playerX,playerY)
-
     show_score(textX,textY)
     pygame.display.update()
 
